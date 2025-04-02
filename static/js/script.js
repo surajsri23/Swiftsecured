@@ -1,293 +1,317 @@
-// Block live server reloads
-window.location.reload = function() {
-    console.log('Reload blocked');
+// Block Live Server reloads
+const originalReload = window.location.reload;
+window.location.reload = function () {
+    console.log('Live Server attempted reload at:', new Date().toISOString());
+    // Prevent reload; remove this line if you want manual reloads later
 };
 
-// Add beforeunload event handler
-window.addEventListener('beforeunload', (e) => {
-    // Check if there's an ongoing upload or processing
-    const uploadBtn = document.getElementById('upload-btn');
-    if (uploadBtn && uploadBtn.disabled) {
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
-    }
-});
+let isFetchingHistory = false;
+let isOperationPending = false;
 
-// Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Script loaded—DOM ready at:', new Date().toISOString());
-    
-    // Prevent form submissions from reloading the page
-    document.querySelectorAll('form').forEach(form => {
+    fetchHistory();
+
+    const predictForm = document.getElementById('predict-form');
+    const uploadBtn = document.getElementById('upload-btn');
+    const csvFileInput = document.getElementById('csv-file');
+    const clearDbBtn = document.getElementById('clear-db-btn');
+    const startNowBtn = document.getElementById('start-now-btn');
+    const exploreBtn = document.getElementById('explore-btn');
+    const backToTopBtn = document.getElementById('back-to-top');
+
+    // Prevent all form submissions from reloading the page
+    document.querySelectorAll('form').forEach((form) => {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Form submission prevented:', form.id, 'at:', new Date().toISOString());
         });
     });
 
-    // Handle predict form submission
-    document.getElementById('predict-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const data = {};
-        formData.forEach((value, key) => {
-            data[key] = parseFloat(value);
+    // Arrow key navigation
+    const inputs = document.querySelectorAll('.transaction-input');
+    inputs.forEach((input, index) => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                if (index < inputs.length - 1) inputs[index + 1].focus();
+            } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (index > 0) inputs[index - 1].focus();
+            }
         });
+    });
 
-        try {
-            const response = await fetch('/predict', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            });
+    // Hero buttons
+    if (startNowBtn) startNowBtn.addEventListener('click', () => document.getElementById('transaction-check')?.scrollIntoView({ behavior: 'smooth' }));
+    if (exploreBtn) exploreBtn.addEventListener('click', () => document.getElementById('how-to-use')?.scrollIntoView({ behavior: 'smooth' }));
 
-            const result = await response.json();
-            const resultDiv = document.getElementById('predict-result');
-            
-            if (result.success) {
-                if (result.prediction === 1) {
+    // Back to Top
+    if (backToTopBtn) {
+        window.addEventListener('scroll', () => {
+            backToTopBtn.style.display = window.scrollY > 300 ? 'block' : 'none';
+        });
+        backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    }
+
+    // Clear Database
+    if (clearDbBtn) {
+        clearDbBtn.addEventListener('click', async (e) => {
+            try {
+                e.preventDefault();
+                e.stopPropagation();
+                if (isOperationPending) return;
+                isOperationPending = true;
+
+                const response = await fetch('http://127.0.0.1:5000/clear_db', {
+                    method: 'POST',
+                    headers: { 'Cache-Control': 'no-cache' }
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const result = await response.json();
+                if (result.error) throw new Error(result.error);
+
+                alert('History cleared!');
+                await fetchHistory();
+            } catch (error) {
+                console.error('Clear DB error:', error);
+                alert(`Error clearing history: ${error.message}`);
+            } finally {
+                isOperationPending = false;
+            }
+        });
+    }
+
+    // CSV Preview
+    if (csvFileInput) {
+        csvFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const csv = event.target.result.split('\n').slice(0, 5);
+                const preview = csv
+                    .map((row) => `<tr><td class="p-2">${row.split(',').join('</td><td class="p-2">')}</td></tr>`)
+                    .join('');
+                const uploadResult = document.getElementById('upload-result');
+                if (uploadResult) {
+                    uploadResult.innerHTML = `
+                        <h3 class="text-xl font-semibold text-white mb-4">CSV Preview (Top 5 Rows)</h3>
+                        <div class="overflow-x-auto"><table class="w-full text-white border border-red-600/30">${preview}</table></div>`;
+                }
+            };
+            reader.readAsText(file);
+        });
+    }
+
+    // Predict Form (Analyze Button)
+    if (predictForm) {
+        predictForm.addEventListener('submit', async (e) => {
+            try {
+                e.preventDefault();
+                e.stopPropagation();
+                if (isOperationPending) return;
+                isOperationPending = true;
+
+                const formData = new FormData(predictForm);
+                const data = Object.fromEntries(formData.entries());
+
+                const resultDiv = document.getElementById('predict-result');
+                if (resultDiv) {
+                    resultDiv.innerHTML = '<p class="text-white">Analyzing...</p>';
+                    showLoadingAnimation('predict-result');
+                }
+
+                const response = await fetch('http://127.0.0.1:5000/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const result = await response.json();
+                if (result.error) throw new Error(result.error);
+
+                if (resultDiv) {
                     resultDiv.innerHTML = `
-                        <div class="p-4 text-center border rounded-lg bg-red-900/30 border-red-600/30">
-                            <div class="flex items-center justify-center mb-2">
-                                <svg class="w-8 h-8 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                                </svg>
-                                <h3 class="text-xl font-bold text-red-500">Fraudulent Transaction Detected!</h3>
+                        <h3 class="text-xl font-semibold text-white mb-4">Fraud Analysis Results</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-white">Risk Level:</span>
+                                <span class="px-4 py-1 rounded-full bg-gradient-to-r ${
+                                    result.prediction === 0 ? 'from-green-500 to-green-600' : 'from-red-500 to-red-600'
+                                } text-white font-medium">
+                                    ${result.prediction === 0 ? 'Low Risk' : 'High Risk'}
+                                </span>
                             </div>
-                            <p class="text-red-300">This transaction has been flagged as potentially fraudulent.</p>
-                        </div>
-                    `;
-                } else {
-                    resultDiv.innerHTML = `
-                        <div class="p-4 text-center border rounded-lg bg-green-900/30 border-green-600/30">
-                            <div class="flex items-center justify-center mb-2">
-                                <svg class="w-8 h-8 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <h3 class="text-xl font-bold text-green-500">Safe Transaction</h3>
+                            <div class="flex items-center justify-between">
+                                <span class="text-white">Confidence Score:</span>
+                                <span class="text-green-400 font-medium">${(result.probability * 100).toFixed(2)}%</span>
                             </div>
-                            <p class="text-green-300">This transaction appears to be legitimate.</p>
-                        </div>
-                    `;
+                        </div>`;
+                    showResultAnimation('predict-result');
                 }
                 await fetchHistory();
-            } else {
-                resultDiv.innerHTML = `
-                    <div class="p-4 text-center text-red-400 bg-red-500/10 rounded-lg">
-                        <p>Error: ${result.error}</p>
-                    </div>
-                `;
+            } catch (error) {
+                console.error('Predict error:', error);
+                if (resultDiv) resultDiv.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+            } finally {
+                isOperationPending = false;
             }
-        } catch (error) {
-            console.error('Error:', error);
-            document.getElementById('predict-result').innerHTML = `
-                <div class="p-4 text-center text-red-400 bg-red-500/10 rounded-lg">
-                    <p>Error processing request</p>
-                </div>
-            `;
-        }
-    });
+        });
+    }
 
-    // Handle CSV file upload
-    const uploadBtn = document.getElementById('upload-btn');
-    const fileInput = document.getElementById('csv-file');
-    
-    if (uploadBtn && fileInput) {
+    // Upload Button (Upload & Scan)
+    if (uploadBtn && csvFileInput) {
         uploadBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const file = fileInput.files[0];
-            
-            if (!file) {
-                alert('Please select a CSV file first');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('file', file);
-
             try {
-                uploadBtn.disabled = true;
-                uploadBtn.textContent = 'Uploading...';
+                e.preventDefault();
+                e.stopPropagation();
+                if (isOperationPending) return;
+                if (!csvFileInput.files.length) {
+                    const uploadResult = document.getElementById('upload-result');
+                    if (uploadResult) uploadResult.innerHTML = '<p class="text-red-400">Please select a CSV file!</p>';
+                    return;
+                }
+                isOperationPending = true;
 
-                const response = await fetch('/upload', {
+                const formData = new FormData();
+                formData.append('file', csvFileInput.files[0]);
+
+                const resultDiv = document.getElementById('upload-result');
+                if (resultDiv) {
+                    resultDiv.innerHTML = '<p class="text-white">Uploading and analyzing...</p>';
+                    showLoadingAnimation('upload-result');
+                }
+
+                const response = await fetch('http://127.0.0.1:5000/upload', {
                     method: 'POST',
+                    headers: { 'Cache-Control': 'no-cache' },
                     body: formData
                 });
 
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const result = await response.json();
-                
-                const uploadResult = document.getElementById('upload-result');
-                if (result.success) {
-                    uploadResult.innerHTML = `
-                        <div class="p-6 border rounded-lg bg-gray-900/30 border-red-600/30">
-                            <h3 class="mb-4 text-xl font-bold text-center">Upload Results</h3>
-                            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                <div class="p-4 text-center border rounded-lg bg-gray-800/50 border-red-600/30">
-                                    <p class="text-2xl font-bold text-red-500">${result.fraudulent_count}</p>
-                                    <p class="text-gray-300">Fraudulent Transactions</p>
-                                </div>
-                                <div class="p-4 text-center border rounded-lg bg-gray-800/50 border-green-600/30">
-                                    <p class="text-2xl font-bold text-green-500">${result.legitimate_count}</p>
-                                    <p class="text-gray-300">Legitimate Transactions</p>
-                                </div>
-                                <div class="p-4 text-center border rounded-lg bg-gray-800/50 border-blue-600/30">
-                                    <p class="text-2xl font-bold text-blue-500">${result.total_count}</p>
-                                    <p class="text-gray-300">Total Transactions</p>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    
-                    // Clear the file input
-                    fileInput.value = '';
-                    
-                    // Update the history
-                    await fetchHistory();
-                } else {
-                    uploadResult.innerHTML = `
-                        <div class="p-4 text-red-400 bg-red-500/10 rounded-lg">
-                            <p class="font-semibold">Upload failed!</p>
-                            <p>${result.error}</p>
-                        </div>
-                    `;
+                if (result.error) throw new Error(result.error);
+
+                if (resultDiv) {
+                    // Create a table for better visualization
+                    const tableRows = result.predictions.map((p, i) => `
+                        <tr class="border-t border-red-600/30">
+                            <td class="p-2">Transaction ${i + 1}</td>
+                            <td class="p-2 ${p === 0 ? 'text-green-400' : 'text-red-400'}">${p === 0 ? 'Safe' : 'Fraud'}</td>
+                            <td class="p-2 text-gray-300">${(result.probabilities[i] * 100).toFixed(2)}%</td>
+                        </tr>
+                    `).join('');
+
+                    resultDiv.innerHTML = `
+                        <h3 class="text-xl font-semibold text-white mb-4">Batch Analysis Results</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-white border border-red-600/30">
+                                <thead>
+                                    <tr class="bg-gray-900/50">
+                                        <th class="p-2 text-left">Transaction</th>
+                                        <th class="p-2 text-left">Status</th>
+                                        <th class="p-2 text-left">Confidence</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRows}
+                                </tbody>
+                            </table>
+                        </div>`;
+                    showResultAnimation('upload-result');
                 }
+
+                // Fetch updated history after successful upload
+                await fetchHistory();
+                
+                // Clear the file input
+                csvFileInput.value = '';
+                
             } catch (error) {
-                console.error('Error uploading file:', error);
-                const uploadResult = document.getElementById('upload-result');
-                uploadResult.innerHTML = `
-                    <div class="p-4 text-red-400 bg-red-500/10 rounded-lg">
-                        <p class="font-semibold">Error uploading file!</p>
-                        <p>Please try again later.</p>
-                    </div>
-                `;
+                console.error('Upload error:', error);
+                if (resultDiv) resultDiv.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
             } finally {
-                uploadBtn.disabled = false;
-                uploadBtn.textContent = 'Upload & Scan';
+                isOperationPending = false;
             }
         });
     }
 
-    // Handle database clearing
-    document.getElementById('clear-db-btn').addEventListener('click', async () => {
-        if (!confirm('Are you sure you want to clear all transaction history?')) {
-            return;
-        }
-
-        try {
-            const response = await fetch('/clear_db', { method: 'POST' });
-            const result = await response.json();
-            
-            if (result.success) {
-                document.getElementById('history').innerHTML = `
-                    <p class="text-center text-gray-400">No transaction history available</p>
-                `;
-            } else {
-                alert('Error clearing database: ' + result.error);
-            }
-        } catch (error) {
-            console.error('Error clearing database:', error);
-            alert('Error clearing database. Please try again later.');
-        }
-    });
-
-    // Handle back to top button
-    const backToTopBtn = document.getElementById('back-to-top');
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 300) {
-            backToTopBtn.classList.remove('hidden');
-        } else {
-            backToTopBtn.classList.add('hidden');
-        }
-    });
-
-    backToTopBtn.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-
-    // Handle navigation
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
+    // Unload protection
+    window.addEventListener('beforeunload', (e) => {
+        console.log('Before unload triggered at:', new Date().toISOString(), 'Pending:', isOperationPending, 'Fetching:', isFetchingHistory);
+        if (isOperationPending || isFetchingHistory) {
             e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
+            return 'Action in progress—sure you want to leave?';
+        }
     });
 
-    // Initial history fetch
-    fetchHistory();
+    // Global error handler
+    window.addEventListener('error', (e) => {
+        console.error('Global error:', e.message, e.stack, 'at:', new Date().toISOString());
+    });
 });
 
-// Function to fetch and display history
 async function fetchHistory() {
+    if (isFetchingHistory) return;
+    isFetchingHistory = true;
     try {
-        const response = await fetch('/history');
+        const response = await fetch('http://127.0.0.1:5000/history');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        
-        const historyDiv = document.getElementById('history');
-        if (!historyDiv) {
-            console.error('History div not found');
-            return;
-        }
+        if (data.error) throw new Error(data.error);
 
-        if (!data || data.length === 0) {
-            historyDiv.innerHTML = '<p class="text-center text-gray-400">No transaction history available</p>';
-            return;
-        }
-
-        historyDiv.innerHTML = data.map(item => {
-            // Create history item
-            const historyItem = document.createElement('div');
-            historyItem.className = `p-4 border rounded-lg ${
-                item.prediction === 1 
-                    ? 'bg-red-900/30 border-red-600/30' 
-                    : 'bg-green-900/30 border-green-600/30'
-            }`;
-            historyItem.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <svg class="w-6 h-6 mr-2 ${item.prediction === 1 ? 'text-red-500' : 'text-green-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            ${item.prediction === 1 
-                                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>'
-                                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
-                            }
-                        </svg>
-                        <span class="font-semibold ${item.prediction === 1 ? 'text-red-500' : 'text-green-500'}">
-        historyDiv.innerHTML = data.map(item => `
-            <div class="p-4 transition-all duration-300 transform rounded-lg bg-gray-900/30 border border-red-600/20 hover:border-red-600/40 hover:shadow-lg hover:shadow-red-600/10">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="text-lg font-semibold">Transaction ID: ${item.id}</p>
-                        <p class="text-sm text-gray-400">Time: ${new Date(item.timestamp).toLocaleString()}</p>
-                    </div>
-                    <span class="px-3 py-1 text-sm font-semibold rounded-full ${
-                        item.prediction === 1 
-                            ? 'bg-red-500/20 text-red-400' 
-                            : 'bg-green-500/20 text-green-400'
-                    }">
-                        ${item.prediction === 1 ? 'Fraudulent' : 'Legitimate'}
-                    </span>
-                </div>
-                <div class="mt-2 text-sm text-gray-400">
-                    <p>Amount: $${item.amount.toFixed(2)}</p>
-                    <p>Confidence: ${(item.confidence * 100).toFixed(2)}%</p>
-                </div>
-            </div>
-        `).join('');
-    } catch (error) {
-        console.error('Error fetching history:', error);
         const historyDiv = document.getElementById('history');
         if (historyDiv) {
-            historyDiv.innerHTML = '<p class="text-center text-red-400">Error loading transaction history</p>';
+            if (!data.history || data.history.length === 0) {
+                historyDiv.innerHTML = '<p class="text-gray-400 text-center">No transaction history available.</p>';
+                return;
+            }
+
+            const historyHtml = data.history.map(item => `
+                <div class="p-4 mb-4 border rounded-lg bg-gray-900/30 border-red-600/30">
+                    <div class="flex justify-between items-center">
+                        <span class="text-white">Transaction ID: ${item.id}</span>
+                        <span class="text-gray-400">${new Date(item.timestamp).toLocaleString()}</span>
+                    </div>
+                    <div class="mt-2">
+                        <span class="text-white">Status: </span>
+                        <span class="px-2 py-1 rounded-full ${
+                            item.prediction === 0 
+                                ? 'bg-green-500/20 text-green-400' 
+                                : 'bg-red-500/20 text-red-400'
+                        }">
+                            ${item.prediction === 0 ? 'Safe' : 'Fraud'}
+                        </span>
+                        <span class="ml-2 text-gray-400">(${(item.probability * 100).toFixed(2)}% confidence)</span>
+                    </div>
+                </div>
+            `).join('');
+            historyDiv.innerHTML = historyHtml;
         }
+    } catch (error) {
+        console.error('History fetch error:', error);
+        const historyDiv = document.getElementById('history');
+        if (historyDiv) historyDiv.innerHTML = `<p class="text-red-400">Error loading history: ${error.message}</p>`;
+    } finally {
+        isFetchingHistory = false;
     }
-} 
+}
+
+function showLoadingAnimation(targetId) {
+    const element = document.getElementById(targetId);
+    if (element) {
+        element.classList.add('animate-pulse');
+    }
+}
+
+function showResultAnimation(targetId) {
+    const element = document.getElementById(targetId);
+    if (element) {
+        element.classList.remove('animate-pulse');
+        element.classList.add('animate-fade-in');
+    }
+}
