@@ -12,4 +12,11 @@ class SimpleModel:
         return self.model.predict(X)
         
     def predict_proba(self, X):
-        return self.model.predict_proba(X) 
+        return self.model.predict_proba(X)
+        
+    def __getstate__(self):
+        return self.model.__getstate__()
+        
+    def __setstate__(self, state):
+        self.model = RandomForestClassifier()
+        self.model.__setstate__(state) 

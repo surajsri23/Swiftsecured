@@ -11,18 +11,6 @@ import json
 import numpy as np
 from model.model_class import SimpleModel  # Import the model class
 
-# Define the model class
-class SimpleModel:
-    def predict(self, X):
-        return np.zeros(len(X))
-    
-    def predict_proba(self, X):
-        return np.array([[0.9, 0.1] for _ in range(len(X))])
-
-class SimpleScaler:
-    def transform(self, X):
-        return X
-
 app = Flask(__name__, static_folder='.', template_folder='.')  # Serve static files from root
 CORS(app)
 
