@@ -66,6 +66,34 @@ python app.py
 http://localhost:5000
 ```
 
+## Deployment
+
+The application is deployed on Render.com. To deploy your own instance:
+
+1. Create a Render account at https://render.com
+
+2. Connect your GitHub repository:
+   - Click "New +" and select "Web Service"
+   - Connect your GitHub repository
+   - Select the repository
+   - Configure the service:
+     - Name: swiftsecure
+     - Environment: Python
+     - Build Command: `pip install -r requirements.txt`
+     - Start Command: `gunicorn app:app`
+     - Python Version: 3.10.0
+
+3. Add environment variables:
+   - FLASK_ENV=production
+   - PYTHON_VERSION=3.10.0
+
+4. Click "Create Web Service"
+
+The application will be automatically deployed and available at:
+```
+https://swiftsecure.onrender.com
+```
+
 ## Project Structure
 
 ```
@@ -73,6 +101,7 @@ credit-card-fraud-detection/
 ├── app.py                 # Main Flask application
 ├── model.py              # Machine learning model
 ├── requirements.txt      # Python dependencies
+├── render.yaml          # Render deployment configuration
 ├── static/              # Static files
 │   ├── css/            # CSS styles
 │   ├── js/             # JavaScript files
