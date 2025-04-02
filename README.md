@@ -22,15 +22,26 @@ A machine learning-based web application for detecting fraudulent credit card tr
 ## Team Members
 
 1. **Suraj Srivasatv** - Backend and ML Developer
+   - GitHub: [@surajsri23](https://github.com/surajsri23/)
+   - LinkedIn: [Suraj Srivastav](https://www.linkedin.com/in/suraj-srivastav-89b972259/)
+
 2. **Sunny Kumar Yadav** - Frontend Developer
+   - GitHub: [@sunnyadavji](https://github.com/sunnyadavji/)
+   - LinkedIn: [Sunny Kumar Yadav](https://www.linkedin.com/in/sunny-kumar-yadav-05697b31b/)
+
 3. **Shamshad Ali** - Research Lead
+   - GitHub: [@shamshad45481](https://github.com/shamshad45481/)
+   - LinkedIn: [Shamshad Ali](https://www.linkedin.com/in/shamshad-ali-aa6803259/)
+
 4. **Suhani Singh** - Documentation lead
+   - GitHub: [@Suhanisingh13](https://github.com/Suhanisingh13/)
+   - LinkedIn: [Suhani Singh](https://www.linkedin.com/in/suhani-singh-a5b487259/)
 
 ## Setup Instructions
 
 1. Clone the repository:
 ```bash
-git clone <https://github.com/surajsri23/SwiftSecure.git>
+git clone https://github.com/surajsri23/SwiftSecure.git
 cd credit-card-fraud-detection
 ```
 
@@ -112,4 +123,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Credit Card Fraud Detection Dataset from Kaggle
 - Team members for their contributions
-- Open-source community for tools and libraries 
+- Open-source community for tools and libraries
