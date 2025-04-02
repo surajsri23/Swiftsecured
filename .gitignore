@@ -37,7 +37,6 @@ Thumbs.db
 
 # Project specific
 *.csv
-*.pkl
 *.h5
 *.model
 .env
@@ -50,9 +49,9 @@ log/
 *.db
 database/*.db
 database/*.sqlite3
-*.pkl
 dataset/*.csv
 !requirements.txt
+!model/*.pkl
 node_modules/
 coverage/
 .coverage
