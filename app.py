@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, Response, send_from_directory
+from flask import Flask, request, jsonify, Response, send_from_directory, render_template, send_file
 import pandas as pd
 import pickle
 import sqlite3
@@ -9,6 +9,7 @@ from flask_cors import CORS
 import time
 import json
 import numpy as np
+from model.model_class import SimpleModel  # Import the model class
 
 # Define the model class
 class SimpleModel:
@@ -25,6 +26,16 @@ class SimpleScaler:
 app = Flask(__name__, static_folder='.', template_folder='.')  # Serve static files from root
 CORS(app)
 
+# Get the absolute path to the base directory
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
+# Load the model and scaler
+with open(os.path.join(BASE_DIR, 'model/fraud_model_final.pkl'), 'rb') as f:
+    model = pickle.load(f)
+
+with open(os.path.join(BASE_DIR, 'model/scaler.pkl'), 'rb') as f:
+    scaler = pickle.load(f)
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_PATH = os.path.join(BASE_DIR, 'swiftsecure.log')
 DB_PATH = os.path.join(BASE_DIR, 'database/transactions.db')  # Adjusted path
@@ -32,16 +43,6 @@ DB_PATH = os.path.join(BASE_DIR, 'database/transactions.db')  # Adjusted path
 logging.basicConfig(filename=LOG_PATH, level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-
-try:
-    with open(os.path.join(BASE_DIR, 'model/fraud_model_final.pkl'), 'rb') as f:  # Updated path
-        model = pickle.load(f)
-    with open(os.path.join(BASE_DIR, 'model/scaler.pkl'), 'rb') as f:  # Updated path
-        scaler = pickle.load(f)
-    logger.info("Model and scaler loaded successfully")
-except Exception as e:
-    logger.error(f"Failed to load model/scaler: {str(e)}")
-    raise
 
 def init_db():
     try:
