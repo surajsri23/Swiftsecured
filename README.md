@@ -21,10 +21,10 @@ A machine learning-based web application for detecting fraudulent credit card tr
 
 ## Team Members
 
-1. **Suraj Kumar** - Backend Developer
-2. **Sunny Kumar** - Backend Developer
-3. **Shamshad Alam** - ML Engineer
-4. **Suhani Kumari** - UI/UX Designer
+1. **Suraj Srivasatv** - Backend and ML Developer
+2. **Sunny Kumar Yadav** - Frontend Developer
+3. **Shamshad Ali** - Research Lead
+4. **Suhani Singh** - Documentation lead
 
 ## Setup Instructions
 
