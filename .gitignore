@@ -47,8 +47,6 @@ Thumbs.db
 logs/
 log/
 *.db
-database/*.db
-database/*.sqlite3
 dataset/*.csv
 !requirements.txt
 *.pkl
