@@ -51,7 +51,7 @@ database/*.db
 database/*.sqlite3
 dataset/*.csv
 !requirements.txt
-!model/*.pkl
+*.pkl
 node_modules/
 coverage/
 .coverage
