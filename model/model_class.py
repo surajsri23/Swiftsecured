@@ -15,8 +15,14 @@ class SimpleModel:
         return self.model.predict_proba(X)
         
     def __getstate__(self):
-        return self.model.__getstate__()
+        state = self.model.__getstate__()
+        return {'model_state': state}
         
     def __setstate__(self, state):
-        self.model = RandomForestClassifier()
-        self.model.__setstate__(state) 
+        if isinstance(state, dict) and 'model_state' in state:
+            self.model = RandomForestClassifier()
+            self.model.__setstate__(state['model_state'])
+        else:
+            # Handle legacy state format
+            self.model = RandomForestClassifier()
+            self.model.__setstate__(state) 

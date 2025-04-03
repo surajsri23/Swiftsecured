@@ -1,0 +1,8 @@
+ebe4776 Fix model loading by removing duplicate class and adding pickle methods
+aa8977c Add model class and update model loading
+cb814c7 Add model files and update gitignore
+86624e4 Update package versions for Python 3.10 compatibility
+edec1a9 Add deployment configuration and instructions
+b2c7b5c Update Team Members section with GitHub profile links
+5f5c7a3 Update README.md and index.html with SwiftSecure branding and improved documentation
+47cd5d5 Initial commit: Credit Card Fraud Detection System
