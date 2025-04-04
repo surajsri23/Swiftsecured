@@ -1,3 +1,5 @@
+startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+
 services:
   - type: web
     name: swiftsecure
