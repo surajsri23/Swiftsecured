@@ -41,7 +41,7 @@ A machine learning-based web application for detecting fraudulent credit card tr
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/surajsri23/SwiftSecure.git
+git clone https://github.com/surajsri23/SwiftSecured.git
 cd credit-card-fraud-detection
 ```
 
