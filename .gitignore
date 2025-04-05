@@ -1,4 +1,9 @@
-# Python
+# This .gitignore file is configured to exclude files and directories commonly generated 
+# during Python development, virtual environments, IDE configurations, operating system 
+# artifacts, project-specific files, and frontend build artifacts. It is also optimized 
+# for deployment on Render.com.
+
+# Python: Excludes compiled Python files, caches, and build artifacts.
 __pycache__/
 *.py[cod]
 *$py.class
@@ -42,16 +47,12 @@ Thumbs.db
 .env
 *.log
 
-# Project specific
+# Logs
 *.log
 logs/
 log/
-*.db
-database/*.db
-database/*.sqlite3
-dataset/*.csv
-!requirements.txt
 
+# Test and coverage
 node_modules/
 coverage/
 .coverage
