@@ -42,7 +42,7 @@ A machine learning-based web application for detecting fraudulent credit card tr
 1. Clone the repository:
 ```bash
 git clone https://github.com/surajsri23/SwiftSecured.git
-cd credit-card-fraud-detection
+cd SwiftSecured
 ```
 
 2. Create and activate a virtual environment:
@@ -55,13 +55,17 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```bash
 pip install -r requirements.txt
 ```
+4. Create Database folder inside the SwiftSecure folder
+   ```bash
+   mkdir database
 
-4. Run the application:
+
+5. Run the application:
 ```bash
 python app.py
 ```
 
-5. Open your browser and navigate to:
+6. Open your browser and navigate to:
 ```
 http://localhost:5000
 ```
@@ -99,15 +103,20 @@ https://swiftsecure.onrender.com
 ```
 credit-card-fraud-detection/
 ├── app.py                 # Main Flask application
-├── model.py              # Machine learning model
+├── model/                 # Machine learning model
+    ├── fraud_model_final.pkl            
+    ├── preprocess.py             
+    └── scaler.py
+    └── train_model.py 
+├── database/              #database folder         
 ├── requirements.txt      # Python dependencies
 ├── render.yaml          # Render deployment configuration
 ├── static/              # Static files
 │   ├── css/            # CSS styles
-│   ├── js/             # JavaScript files
 │   └── images/         # Image assets
-└── templates/          # HTML templates
-    └── index.html      # Main page template
+├── script.js            # JavaScript files
+└── index.html      # Main page template
+
 ```
 
 ## Usage
