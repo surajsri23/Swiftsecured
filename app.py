@@ -9,6 +9,9 @@ from flask_cors import CORS
 import time
 import json
 import numpy as np
+from dotenv import load_dotenv
+load_dotenv()
+
 
 app = Flask(__name__, static_folder='.', template_folder='.')
 CORS(app)
