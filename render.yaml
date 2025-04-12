@@ -1,13 +1,9 @@
-startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
-
 services:
   - type: web
-    name: swiftsecure
+    name: SwiftSecured
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.10.0
       - key: FLASK_ENV
-        value: production 
+        value: production
