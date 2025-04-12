@@ -75,11 +75,8 @@ http://localhost:5000
 
 ## Deployment
 
-
-The application will be automatically deployed and available at:
-```
-https://swiftsecure.onrender.com
-```
+see our site
+(https://swiftsecure.onrender.com)
 
 ## Project Structure
 
