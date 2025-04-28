@@ -105,7 +105,7 @@ def upload():
         file = request.files['file']
         if file.filename == '':
             raise ValueError("Empty file uploaded")
-        if file.content_length > 10 * 1024 * 1024:
+        if file.content_length > 200 * 1024 * 1024:
             raise ValueError("File too large - max 10MB")
         
         logger.debug(f"Uploading file: {file.filename}, content-type: {file.content_type}")
