@@ -1,20 +1,5 @@
-# Flask: A lightweight WSGI web application framework.
-# flask-cors: A Flask extension for handling Cross-Origin Resource Sharing (CORS).
-# pandas: A powerful data analysis and manipulation library.
-# numpy: A library for numerical computations and array processing.
-# scikit-learn: A machine learning library for Python.
-# scipy: A library for scientific and technical computing.
-# joblib: A library for lightweight pipelining in Python.
-# Werkzeug: A comprehensive WSGI web application library.
-# python-dotenv: A library to load environment variables from a .env file.
-# gunicorn: A Python WSGI HTTP server for UNIX.
-# pytest: A testing framework for Python.
-# black: A code formatter for Python.
-# flake8: A tool for enforcing Python style guide compliance.
-# isort: A Python utility for sorting imports.
-# psycopg2: A PostgreSQL database adapter for Python.
 flask==2.3.3
-flask-cors==5.0.1
+flask-cors==5.2.0
 pandas==2.1.1
 numpy==1.26.0
 scikit-learn==1.3.1
