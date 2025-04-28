@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isOperationPending) return;
                 isOperationPending = true;
 
-                const response = await fetch('http://127.0.0.1:5000/clear_db', {
+                const response = await fetch('https://swiftsecured.onrender.com/clear_db', {
                     method: 'POST',
                     headers: { 'Cache-Control': 'no-cache' }
                 });
@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 console.log('Analyzing data:', data);
-                const response = await fetch('http://127.0.0.1:5000/predict', {
+                const response = await fetch('https://swiftsecured.onrender.com/predict', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
                     body: JSON.stringify(data)
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 console.log('Checking fraud for:', data);
-                const response = await fetch('http://127.0.0.1:5000/predict', {
+                const response = await fetch('https://swiftsecured.onrender.com/predict', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
                     body: JSON.stringify(data)
@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 console.log('Uploading file:', file.name, 'size:', file.size);
-                const response = await fetch('http://127.0.0.1:5000/upload', {
+                const response = await fetch('https://swiftsecured.onrender.com/upload', {
                     method: 'POST',
                     headers: { 'Cache-Control': 'no-cache' },
                     body: formData
@@ -290,7 +290,7 @@ async function fetchHistory() {
     if (isFetchingHistory) return;
     isFetchingHistory = true;
     try {
-        const response = await fetch('http://127.0.0.1:5000/history');
+        const response = await fetch('https://swiftsecured.onrender.com/history');
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         if (data.error) throw new Error(data.error);
